@@ -67,6 +67,11 @@ Set env var `ETH_RPC_URL`
 forge create src/mapping.sol:FavoriteRecords --mnemonic-path=$BASE_BOOTCAMP_WALLET
 ```
 
+Example
+```
+forge create src/math.sol:BasicMath --mnemonic-path=$BASE_BOOTCAMP_WALLET --verify --chain-id=84531 --etherscan-api-key=base-goerli --constructor-args <arg1> <arg2>
+```
+
 ### Contract verification
 ``
 forge v <address> <contract> --chain-id=84531 --etherscan-api-key=base-goerli
