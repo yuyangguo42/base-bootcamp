@@ -3,4 +3,7 @@ src = "src"
 out = "out"
 libs = ["lib"]
 
+[etherscan]
+base-goerli = { key = "PLACEHOLDER_STRING", url = "https://api-goerli.basescan.org/api" }
+
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options

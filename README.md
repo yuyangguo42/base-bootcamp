@@ -2,6 +2,9 @@
 # About this repo
 Exercise from https://docs.base.org/base-camp/
 
+# Setup
+Copy .env.sample to .env
+
 # Foundry Instructions
 ## Foundry
 
@@ -54,6 +57,19 @@ $ anvil
 
 ```shell
 $ forge script script/Counter.s.sol:CounterScript --rpc-url <your_rpc_url> --private-key <your_private_key>
+```
+
+(Not sure what's the diff between this and above)
+
+Set env var `ETH_RPC_URL`
+
+```
+forge create src/mapping.sol:FavoriteRecords --mnemonic-path=$BASE_BOOTCAMP_WALLET
+```
+
+### Contract verification
+``
+forge v <address> <contract> --chain-id=84531 --etherscan-api-key=base-goerli
 ```
 
 ### Cast
