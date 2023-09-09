@@ -2,7 +2,7 @@
 pragma solidity ^0.8.17;
 
 import {Test, console2} from "forge-std/Test.sol";
-import {FavoriteRecords} from "../src/mapping.sol";
+import {FavoriteRecords} from "../src/04-mapping.sol";
 
 contract FavoriteRecordsTest is Test {
     FavoriteRecords public favRecords;

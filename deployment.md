@@ -7,3 +7,4 @@
 | 02-storage.sol  | 0xe2b1ef54f56595e6338dd7f18bfa540c2baeed2a |
 | 03-array.sol    | 0xf1aa1a435e8be69b3139d5da0f1f33b471bed7ee |
 | 04-mapping.sol  | 0xad923a0beed0445ff842943c3cc49b9e2ac53d11 |
+| 05-struct.sol   | 0xd930620434c44db41bb6886cfc108fb37610faab |
