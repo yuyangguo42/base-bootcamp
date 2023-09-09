@@ -1,6 +1,6 @@
 
 # About this repo
-Exercise from https://docs.base.org/base-camp/
+Just doing some Solidity / Base exercise from https://docs.base.org/base-camp/
 
 # Setup
 Copy .env.sample to .env
