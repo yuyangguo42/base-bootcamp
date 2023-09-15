@@ -12,3 +12,4 @@
 |                    | em:    0x9a0f9b502c5a2d0dbad415f160b366b740cd8086      |
 |                    | submission: 0x57280221060a6763a0b1c664d1a2bd13fdf3ef24 |
 | 07-import.sol      | 0x2cb3735eea5c1188f4084239584dfbaba88e2d54             |
+| 08-error.sol       | 0x5023a9cc1677887a6ed500d0659de4ffd9f76df8             |
