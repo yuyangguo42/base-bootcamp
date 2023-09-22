@@ -15,3 +15,4 @@
 | 08-error.sol         | 0x5023a9cc1677887a6ed500d0659de4ffd9f76df8             |
 | 09-factory.sol       | 0xf33c8976e9aad43b68283b6dde4f40779f2a5677             |
 | 10-minimal-token.sol | 0xa4d6a4f13b003c1030869c027c08c0c33b5dc775             |
+| 11-erc20.sol         | 0xfed1e0fcebcc2a99de2c1737ecbd4ee5ba0f5b12             |
