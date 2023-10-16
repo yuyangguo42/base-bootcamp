@@ -19,7 +19,7 @@ contract RevocableTrustAccessControlTest is Test {
         ac = new RevocableTrustAccessControl(successorTrustee, witness, uint(100));
     }
 
-    function testTrustManagementSuccess() public {
+    function testTrustManagement() public {
         // Initialization success
         vm.startPrank(publicViewer);
         assertEq(ac.trustor(), trustor);
@@ -125,9 +125,54 @@ contract RevocableTrustAccessControlTest is Test {
         vm.startPrank(ac.successorTrustee());
         vm.expectRevert();
         ac.approveSuccessionEvent();
+        vm.stopPrank();
 
         // Successor, Witness and random person cannot repair trust
+        _rejectSuccessionEvent(trustor, TrustAccessControlConsts.TrustState.SUCESSION_PROPOSED);
+        vm.startPrank(ac.successorTrustee());
+        vm.expectRevert();
+        ac.repairTrust(successorTrustee3, witness3);
+        vm.startPrank(ac.successionWitness());
+        vm.expectRevert();
+        ac.repairTrust(successorTrustee3, witness3);
+        vm.startPrank(publicViewer);
+        vm.expectRevert();
+        ac.repairTrust(successorTrustee3, witness3);
+    }
 
+    function testAccessAfterRoleChange() public {
+        uint startTime = 1680619999;
+        uint delayTime = 10000;
+
+        // Old witness cannot approve
+        _prepareProposedSuccessionTrust(startTime, delayTime);
+        vm.startPrank(trustor);
+        ac.changeSuccessionWitness(witness3);
+        vm.startPrank(witness);
+        vm.expectRevert();
+        ac.approveSuccessionEvent();
+
+        // New witness can approve
+        vm.startPrank(witness3);
+        ac.approveSuccessionEvent();
+        assertEq(uint8(ac.trustState()), uint8(TrustAccessControlConsts.TrustState.SUCESSION_PENDING));
+
+        // Advance delay time
+        vm.warp(startTime + delayTime);
+
+        // Old successorTrustee cannot finalize
+        vm.startPrank(trustor);
+        ac.changeSuccessorTrustee(successorTrustee3);
+        vm.startPrank(successorTrustee);
+        vm.expectRevert();
+        ac.finalizeSuccessionEvent();
+
+        // New successorTrustee can finalize
+        vm.startPrank(successorTrustee3);
+        ac.finalizeSuccessionEvent();
+        assertEq(uint8(ac.trustState()), uint8(TrustAccessControlConsts.TrustState.IRREVOCABLE));
+
+        vm.stopPrank();
     }
 
     function testAttemptFinalizationBeforeDelay() public {

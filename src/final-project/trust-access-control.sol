@@ -70,6 +70,7 @@ contract RevocableTrustAccessControl is AccessControl {
         TrustAccessControlConsts.TrustState expected
     );
     error SuccessionDelayNotSatisfied(uint tsWhenSuccessionUnlocked);
+    // TODO(yuyang, oct-14-2023): Enforce witness and successorTrustee not the same one
 
     // Initial setup of Trust
     constructor (address _successorTrustee, address _successionWitness, uint _successionApprovalDelaySeconds) {
