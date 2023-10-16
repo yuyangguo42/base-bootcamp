@@ -25,7 +25,14 @@ library TrustAccessControlConsts {
         //              Trust rules can no longer be modified.
         IRREVOCABLE
     }
+
+    event TrustStateTransition(
+        address executor,
+        TrustAccessControlConsts.TrustState oldState,
+        TrustAccessControlConsts.TrustState newState
+    );
 }
+
 contract RevocableTrustAccessControl is AccessControl {
     // Definitions
     // Succession event: when the current Trustee passes
@@ -45,12 +52,13 @@ contract RevocableTrustAccessControl is AccessControl {
     // 3. Succession Witness
     // - approve/reject a succession event
 
-    bytes32 public constant TRUSTEE = keccak256("SUCCESSOR_TRUSTEE");
+    bytes32 public constant TRUSTEE = keccak256("TRUSTEE");
     bytes32 public constant SUCCESSOR_TRUSTEE = keccak256("SUCCESSOR_TRUSTEE");
-    bytes32 public constant SUCCESSION_WITNESS = keccak256("SUCCESSOR_TRUSTEE");
+    bytes32 public constant SUCCESSION_WITNESS = keccak256("SUCCESSION_WITNESS");
 
-    address successorTrustee;
-    address successionWitness;
+    address public trustor;
+    address public successorTrustee;
+    address public successionWitness;
 
     TrustAccessControlConsts.TrustState public trustState;
     uint public successionProposalTs;
@@ -68,14 +76,15 @@ contract RevocableTrustAccessControl is AccessControl {
         trustState = TrustAccessControlConsts.TrustState.REVOCABLE;
         successionApprovalDelaySeconds = _successionApprovalDelaySeconds;
 
+        trustor = msg.sender;
         successorTrustee = _successorTrustee;
         successionWitness = _successionWitness;
 
         // TODO(yuyang, oct-14-2023): Factory set the DEFAULT_ADMIN_ROLE? Or here?
-        grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
-        grantRole(TRUSTEE, msg.sender);
-        grantRole(SUCCESSOR_TRUSTEE, _successorTrustee);
-        grantRole(SUCCESSION_WITNESS, _successionWitness);
+        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        _grantRole(TRUSTEE, msg.sender);
+        _grantRole(SUCCESSOR_TRUSTEE, _successorTrustee);
+        _grantRole(SUCCESSION_WITNESS, _successionWitness);
     }
 
     // ================ Trustor's Management Interfaces =========================
@@ -95,6 +104,12 @@ contract RevocableTrustAccessControl is AccessControl {
         grantRole(SUCCESSION_WITNESS, successionWitness);
     }
 
+    function updateSuccessionApprovalDelaySeconds(uint _newDelaySeconds) public {
+        _checkRole(DEFAULT_ADMIN_ROLE);
+
+        successionApprovalDelaySeconds = _newDelaySeconds;
+    }
+
     // @notice Called by Trustor after a fraudulent succession event happens to repair Trust state
     function repairTrust(address _newSuccessorTrustee, address _newSuccessionWitness) public {
         _checkRole(DEFAULT_ADMIN_ROLE);
@@ -105,16 +120,10 @@ contract RevocableTrustAccessControl is AccessControl {
         );
 
         changeSuccessorTrustee(_newSuccessorTrustee);
-        changeSuccessorTrustee(_newSuccessionWitness);
+        changeSuccessionWitness(_newSuccessionWitness);
     }
 
     // ================= Sucession Management Interfaces =========================
-    event TrustStateTransition(
-        address executor,
-        TrustAccessControlConsts.TrustState oldState,
-        TrustAccessControlConsts.TrustState newState
-    );
-
     // @notice After Trustor passes, this function can be used by successor trustee to initiate the transition
     function proposeSuccessionEvent() public {
         _checkRole(SUCCESSOR_TRUSTEE);
@@ -139,11 +148,11 @@ contract RevocableTrustAccessControl is AccessControl {
     // @notice For Witness or Trustor to reject a fraudulent succession event
     //         Once rejected, Trustor need to call `repairTrust`.
     function rejectSuccessionEvent() public {
-        if (!hasRole(SUCCESSION_WITNESS, msg.sender) || !hasRole(DEFAULT_ADMIN_ROLE, msg.sender)) {
+        if (!hasRole(SUCCESSION_WITNESS, msg.sender) && !hasRole(DEFAULT_ADMIN_ROLE, msg.sender)) {
             revert UnauthorizedRole(msg.sender, "Need SUCCESSION_WITNESS or ADMIN role");
         }
 
-        if (trustState != TrustAccessControlConsts.TrustState.SUCESSION_PENDING ||
+        if (trustState != TrustAccessControlConsts.TrustState.SUCESSION_PENDING &&
             trustState != TrustAccessControlConsts.TrustState.SUCESSION_PROPOSED) {
             // TODO(yuyang, oct-14-2023) make the error extensive
             revert TrustStateMismatch(trustState, TrustAccessControlConsts.TrustState.SUCESSION_PROPOSED);
@@ -154,14 +163,17 @@ contract RevocableTrustAccessControl is AccessControl {
     // @notice For successor trustee to finalize succession event after approval & delay time elapse.
     function finalizeSuccessionEvent() public {
         _checkRole(SUCCESSOR_TRUSTEE);
+        _checkTrustState(TrustAccessControlConsts.TrustState.SUCESSION_PENDING);
+        if (successionProposalTs == 0) {
+            // Uninitialized, likely a bug from the contract
+            revert("Contract bug: state moved to SUCESSION_PENDING without setting proposalTS");
+        }
+
         uint expectedTs = successionProposalTs + successionApprovalDelaySeconds;
         if (block.timestamp < expectedTs) {
             revert SuccessionDelayNotSatisfied(expectedTs);
         }
-        _checkAndChangeTrustState(
-            TrustAccessControlConsts.TrustState.SUCESSION_PENDING,
-            TrustAccessControlConsts.TrustState.IRREVOCABLE
-        );
+        _unsafeChangeTrustState(TrustAccessControlConsts.TrustState.IRREVOCABLE);
     }
 
     // Private helpers for trust state management
@@ -184,8 +196,8 @@ contract RevocableTrustAccessControl is AccessControl {
     // TODO: consider centralizing the state transition validity here
     function _unsafeChangeTrustState(TrustAccessControlConsts.TrustState newState) private {
         TrustAccessControlConsts.TrustState prevState = trustState;
-        trustState = TrustAccessControlConsts.TrustState.SUCESSION_PROPOSED;
-        emit TrustStateTransition(msg.sender, prevState, newState);
+        trustState = newState;
+        emit TrustAccessControlConsts.TrustStateTransition(msg.sender, prevState, newState);
     }
 
 }
