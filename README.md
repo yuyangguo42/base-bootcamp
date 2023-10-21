@@ -53,6 +53,21 @@ $ forge snapshot
 $ anvil
 ```
 
+### Dependencies
+#### Step 1: forge install
+
+e.g. To install https://github.com/eth-infinitism/account-abstraction
+```shell
+$ forge install eth-infinitism/account-abstraction
+```
+#### Step 2: add remapping to foundry.toml
+```
+remappings = [
+    "@account-abstraction/=lib/account-abstraction/contracts",
+    ...
+]
+```
+
 ### Deploy
 
 ```shell

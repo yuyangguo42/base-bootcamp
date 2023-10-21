@@ -88,6 +88,16 @@ contract RevocableTrustAccessControl is AccessControl {
         _grantRole(SUCCESSION_WITNESS, _successionWitness);
     }
 
+    // ================ Asset management Interfaces =====================
+    // Trustor has full access to funds until the trust becomes irrevocable
+    function hasFullAccessToManageFund(address _addr) public view returns (bool) {
+        if (trustState == TrustAccessControlConsts.TrustState.IRREVOCABLE) {
+            return _addr == successorTrustee;
+        } else {
+            return _addr == trustor;
+        }
+    }
+
     // ================ Trustor's Management Interfaces =========================
     function changeSuccessorTrustee(address _newSuccessorTrustee) public {
         _checkRole(DEFAULT_ADMIN_ROLE);
