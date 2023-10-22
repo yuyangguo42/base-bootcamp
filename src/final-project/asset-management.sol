@@ -11,7 +11,18 @@ contract RevocableTrustAssetManagementAccount is BaseAccount, RevocableTrustAcce
 
     IEntryPoint private immutable _entryPoint;
 
-    constructor (IEntryPoint _ep, address _successorTrustee, address _successionWitness, uint _successionApprovalDelaySeconds) RevocableTrustAccessControl(_successorTrustee, _successionWitness, _successionApprovalDelaySeconds) {
+    constructor (
+        IEntryPoint _ep,
+        address _trustor,
+        address _successorTrustee,
+        address _successionWitness,
+        uint _successionApprovalDelaySeconds
+    ) RevocableTrustAccessControl(
+        _trustor,
+        _successorTrustee,
+        _successionWitness,
+        _successionApprovalDelaySeconds
+    ) {
         _entryPoint = _ep;
     }
 

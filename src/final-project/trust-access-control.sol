@@ -73,17 +73,21 @@ contract RevocableTrustAccessControl is AccessControl {
     // TODO(yuyang, oct-14-2023): Enforce witness and successorTrustee not the same one
 
     // Initial setup of Trust
-    constructor (address _successorTrustee, address _successionWitness, uint _successionApprovalDelaySeconds) {
+    constructor (
+        address _trustor,
+        address _successorTrustee,
+        address _successionWitness,
+        uint _successionApprovalDelaySeconds
+    ) {
         trustState = TrustAccessControlConsts.TrustState.REVOCABLE;
         successionApprovalDelaySeconds = _successionApprovalDelaySeconds;
 
-        trustor = msg.sender;
+        trustor = _trustor;
         successorTrustee = _successorTrustee;
         successionWitness = _successionWitness;
 
-        // TODO(yuyang, oct-14-2023): Factory set the DEFAULT_ADMIN_ROLE? Or here?
-        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
-        _grantRole(TRUSTEE, msg.sender);
+        _grantRole(DEFAULT_ADMIN_ROLE, _trustor);
+        _grantRole(TRUSTEE, _trustor);
         _grantRole(SUCCESSOR_TRUSTEE, _successorTrustee);
         _grantRole(SUCCESSION_WITNESS, _successionWitness);
     }
@@ -99,32 +103,24 @@ contract RevocableTrustAccessControl is AccessControl {
     }
 
     // ================ Trustor's Management Interfaces =========================
-    function changeSuccessorTrustee(address _newSuccessorTrustee) public {
-        _checkRole(DEFAULT_ADMIN_ROLE);
-
+    function changeSuccessorTrustee(address _newSuccessorTrustee) public onlyRole(DEFAULT_ADMIN_ROLE) {
         revokeRole(SUCCESSOR_TRUSTEE, successorTrustee);
         successorTrustee = _newSuccessorTrustee;
         grantRole(SUCCESSOR_TRUSTEE, successorTrustee);
     }
 
-    function changeSuccessionWitness(address _newSuccessionWitness) public {
-        _checkRole(DEFAULT_ADMIN_ROLE);
-
+    function changeSuccessionWitness(address _newSuccessionWitness) public onlyRole(DEFAULT_ADMIN_ROLE) {
         revokeRole(SUCCESSION_WITNESS, successionWitness);
         successionWitness = _newSuccessionWitness;
         grantRole(SUCCESSION_WITNESS, successionWitness);
     }
 
-    function updateSuccessionApprovalDelaySeconds(uint _newDelaySeconds) public {
-        _checkRole(DEFAULT_ADMIN_ROLE);
-
+    function updateSuccessionApprovalDelaySeconds(uint _newDelaySeconds) public onlyRole(DEFAULT_ADMIN_ROLE) {
         successionApprovalDelaySeconds = _newDelaySeconds;
     }
 
     // @notice Called by Trustor after a fraudulent succession event happens to repair Trust state
-    function repairTrust(address _newSuccessorTrustee, address _newSuccessionWitness) public {
-        _checkRole(DEFAULT_ADMIN_ROLE);
-
+    function repairTrust(address _newSuccessorTrustee, address _newSuccessionWitness) public onlyRole(DEFAULT_ADMIN_ROLE) {
         _checkAndChangeTrustState(
             TrustAccessControlConsts.TrustState.SUCESSION_REJECTED,
             TrustAccessControlConsts.TrustState.REVOCABLE
@@ -136,9 +132,7 @@ contract RevocableTrustAccessControl is AccessControl {
 
     // ================= Sucession Management Interfaces =========================
     // @notice After Trustor passes, this function can be used by successor trustee to initiate the transition
-    function proposeSuccessionEvent() public {
-        _checkRole(SUCCESSOR_TRUSTEE);
-
+    function proposeSuccessionEvent() public onlyRole(SUCCESSOR_TRUSTEE) {
         _checkAndChangeTrustState(
             TrustAccessControlConsts.TrustState.REVOCABLE,
             TrustAccessControlConsts.TrustState.SUCESSION_PROPOSED
@@ -147,9 +141,7 @@ contract RevocableTrustAccessControl is AccessControl {
     }
 
     // @notice After Trustor passes, this function can be used by witness to approve the proposed transition
-    function approveSuccessionEvent() public {
-        _checkRole(SUCCESSION_WITNESS);
-
+    function approveSuccessionEvent() public onlyRole(SUCCESSION_WITNESS) {
         _checkAndChangeTrustState(
             TrustAccessControlConsts.TrustState.SUCESSION_PROPOSED,
             TrustAccessControlConsts.TrustState.SUCESSION_PENDING
@@ -172,8 +164,7 @@ contract RevocableTrustAccessControl is AccessControl {
     }
 
     // @notice For successor trustee to finalize succession event after approval & delay time elapse.
-    function finalizeSuccessionEvent() public {
-        _checkRole(SUCCESSOR_TRUSTEE);
+    function finalizeSuccessionEvent() public onlyRole(SUCCESSOR_TRUSTEE) {
         _checkTrustState(TrustAccessControlConsts.TrustState.SUCESSION_PENDING);
         if (successionProposalTs == 0) {
             // Uninitialized, likely a bug from the contract

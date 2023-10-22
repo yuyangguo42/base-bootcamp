@@ -16,7 +16,7 @@ contract RevocableTrustAccessControlTest is Test {
 
     function setUp() public {
         vm.prank(trustor);
-        ac = new RevocableTrustAccessControl(successorTrustee, witness, uint(100));
+        ac = new RevocableTrustAccessControl(trustor, successorTrustee, witness, uint(100));
     }
 
     function testTrustManagement() public {
@@ -108,7 +108,7 @@ contract RevocableTrustAccessControlTest is Test {
 
         // Random person cannot initiate succession
         vm.prank(trustor);
-        ac = new RevocableTrustAccessControl(successorTrustee, witness, delayTime);
+        ac = new RevocableTrustAccessControl(trustor, successorTrustee, witness, delayTime);
 
         vm.startPrank(publicViewer);
         vm.expectRevert();
@@ -214,7 +214,7 @@ contract RevocableTrustAccessControlTest is Test {
     function _prepareProposedSuccessionTrust(uint startTime, uint delayTime) private {
         vm.warp(startTime);
         vm.startPrank(trustor);
-        ac = new RevocableTrustAccessControl(successorTrustee, witness, delayTime);
+        ac = new RevocableTrustAccessControl(trustor, successorTrustee, witness, delayTime);
         assertEq(uint8(ac.trustState()), uint8(TrustAccessControlConsts.TrustState.REVOCABLE));
         vm.stopPrank();
 
